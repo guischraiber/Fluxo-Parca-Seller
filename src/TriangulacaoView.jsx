@@ -16,8 +16,10 @@ export default function TriangulacaoView({ tri, setTri }) {
   const aPago = v * (tri.a.percParceiro || 0) / 100
   const aRepasse = aPago * (tri.a.percRepasse || 0) / 100
   // Option B
-  const bSeller = v * (tri.b.percSeller || 0) / 100
-  const bTaxa = v * (tri.b.percTaxa || 0) / 100
+  const bComissaoMadeira = v * (tri.b.percComissaoMadeira || 0) / 100
+  const bComissaoColeta = v * (tri.b.percComissaoColeta || 0) / 100
+  const bComissaoLiquida = bComissaoMadeira - bComissaoColeta
+  const bRepasseSeller = v - bComissaoMadeira
   // Option C
   const cCompra = v * (tri.c.percCompra || 0) / 100
   const cRevenda = v * (tri.c.percRevenda || 0) / 100
@@ -91,42 +93,40 @@ export default function TriangulacaoView({ tri, setTri }) {
         {/* OPTION B */}
         <div className="tri-option">
           <div className="tri-tag">Opção B</div>
-          <h3>Fluxos desacoplados</h3>
-          <p className="tri-desc">O parceiro paga o seller diretamente e paga a Madeira separadamente, por uma taxa de coordenação do serviço.</p>
+          <h3>Abatido na comissão da Madeira</h3>
+          <p className="tri-desc">O seller recebe o repasse normal da venda, sem nenhuma redução. A taxa de comissão por coleta é abatida da própria comissão de marketplace que a Madeira já retém sobre a venda — o custo fica com a Madeira, não com o seller.</p>
           <div className="tri-flow">
             <div className="tri-flow-row">
-              <div className="tri-node parceiro">Parceiro</div>
-              <div className="tri-arrow-lbl"><span className="tri-val">{fmt(bSeller)}</span><span className="tri-arrow-end">→</span></div>
-              <div className="tri-node seller">Seller</div>
-            </div>
-            <div className="tri-flow-row">
-              <div className="tri-node parceiro hidden">Parceiro</div>
-              <div className="tri-arrow-lbl"><span className="tri-val">{fmt(bTaxa)}</span><span className="tri-arrow-end">→</span></div>
               <div className="tri-node madeira">Madeira</div>
+              <div className="tri-arrow-lbl"><span className="tri-val">{fmt(bRepasseSeller)}</span><span className="tri-arrow-end">→</span></div>
+              <div className="tri-node seller">Seller <span style={{ fontWeight: 400, color: 'var(--ink-soft)' }}>(repasse normal, sem alteração)</span></div>
             </div>
-            <div className="tri-retain-note">Madeira só fatura a própria taxa: <b>{fmt(bTaxa)}</b></div>
+            <div className="tri-retain-note">
+              Comissão de marketplace retida pela Madeira: <b>{fmt(bComissaoMadeira)}</b> · Comissão por coleta abatida dela: <b>{fmt(bComissaoColeta)}</b><br />
+              Margem líquida da Madeira sobre a venda: <b>{fmt(bComissaoLiquida)}</b>
+            </div>
             <div className="tri-perc-row">
-              <span>% pago direto ao seller: <input type="number" min="0" max="100" value={tri.b.percSeller}
-                onChange={e => setOptField('b', 'percSeller', parseFloat(e.target.value) || 0)} />%</span>
-              <span>% taxa de coordenação p/ Madeira: <input type="number" min="0" max="100" value={tri.b.percTaxa}
-                onChange={e => setOptField('b', 'percTaxa', parseFloat(e.target.value) || 0)} />%</span>
+              <span>% comissão de marketplace (Madeira): <input type="number" min="0" max="100" value={tri.b.percComissaoMadeira}
+                onChange={e => setOptField('b', 'percComissaoMadeira', parseFloat(e.target.value) || 0)} />%</span>
+              <span>% comissão por coleta (abatida dela): <input type="number" min="0" max="100" value={tri.b.percComissaoColeta}
+                onChange={e => setOptField('b', 'percComissaoColeta', parseFloat(e.target.value) || 0)} />%</span>
             </div>
           </div>
           <div className="tri-cols">
             <div className="tri-col pos">
               <h4>Vantagens</h4>
               <ul>
-                <li>Madeira nunca tem custódia de valor de terceiro — só fatura o próprio serviço.</li>
-                <li>Cada nota fiscal fica clara: venda do seller ao parceiro e serviço de coordenação da Madeira.</li>
-                <li>Reaproveita a lógica de faturamento de parceiro já existente (Protheus/CSC Financeiro).</li>
+                <li>Seller recebe o repasse normal da venda, sem qualquer redução — menor risco de reclamação ou desgaste com o seller.</li>
+                <li>Não cria cobrança nova para o seller nem para o parceiro.</li>
+                <li>Simples de calcular: é só um ajuste na margem interna da Madeira.</li>
               </ul>
             </div>
             <div className="tri-col neg">
               <h4>Considerações fiscais</h4>
               <ul>
-                <li>Depende de dois pagamentos distintos acontecerem — risco de o parceiro pagar um lado e não o outro.</li>
-                <li>Mais difícil garantir SLA de recebimento do seller, já que a Madeira não controla esse pagamento.</li>
-                <li>Reconciliação mais dispersa, com mais partes envolvidas por caso.</li>
+                <li>Precisa ficar claro internamente que a comissão por coleta é um custo operacional absorvido pela Madeira, sem alterar o valor declarado na nota de comissão de marketplace da venda.</li>
+                <li>Requer controle interno separado (não fiscal) para acompanhar esse abatimento sem gerar duplicidade de lançamento.</li>
+                <li>Reduz a margem operacional da Madeira por venda cancelada com coleta pelo parceiro — pode exigir acompanhamento de rentabilidade por canal/parceiro.</li>
               </ul>
             </div>
           </div>
