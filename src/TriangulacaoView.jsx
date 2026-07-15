@@ -16,10 +16,7 @@ export default function TriangulacaoView({ tri, setTri }) {
   const aPago = v * (tri.a.percParceiro || 0) / 100
   const aRepasse = aPago * (tri.a.percRepasse || 0) / 100
   // Option B
-  const bComissaoMadeira = v * (tri.b.percComissaoMadeira || 0) / 100
-  const bComissaoColeta = v * (tri.b.percComissaoColeta || 0) / 100
-  const bComissaoLiquida = bComissaoMadeira - bComissaoColeta
-  const bRepasseSeller = v - bComissaoMadeira
+  const bTaxaColeta = v * (tri.b.percTaxaColeta || 0) / 100
   // Option C
   const cCompra = v * (tri.c.percCompra || 0) / 100
   const cRevenda = v * (tri.c.percRevenda || 0) / 100
@@ -98,18 +95,15 @@ export default function TriangulacaoView({ tri, setTri }) {
           <div className="tri-flow">
             <div className="tri-flow-row">
               <div className="tri-node madeira">Madeira</div>
-              <div className="tri-arrow-lbl"><span className="tri-val">{fmt(bRepasseSeller)}</span><span className="tri-arrow-end">→</span></div>
-              <div className="tri-node seller">Seller <span style={{ fontWeight: 400, color: 'var(--ink-soft)' }}>(repasse normal, sem alteração)</span></div>
+              <div className="tri-arrow-lbl"><span className="tri-val">{fmt(bTaxaColeta)}</span></div>
+              <div className="tri-node" style={{ borderTop: '3px solid var(--warn)' }}>Taxa por coleta</div>
             </div>
             <div className="tri-retain-note">
-              Comissão de marketplace retida pela Madeira: <b>{fmt(bComissaoMadeira)}</b> · Comissão por coleta abatida dela: <b>{fmt(bComissaoColeta)}</b><br />
-              Margem líquida da Madeira sobre a venda: <b>{fmt(bComissaoLiquida)}</b>
+              Abatida diretamente da comissão de marketplace que a Madeira retém sobre a venda — o repasse ao seller não é afetado.
             </div>
             <div className="tri-perc-row">
-              <span>% comissão de marketplace (Madeira): <input type="number" min="0" max="100" value={tri.b.percComissaoMadeira}
-                onChange={e => setOptField('b', 'percComissaoMadeira', parseFloat(e.target.value) || 0)} />%</span>
-              <span>% comissão por coleta (abatida dela): <input type="number" min="0" max="100" value={tri.b.percComissaoColeta}
-                onChange={e => setOptField('b', 'percComissaoColeta', parseFloat(e.target.value) || 0)} />%</span>
+              <span>% taxa por coleta (sobre o valor do produto): <input type="number" min="0" max="100" value={tri.b.percTaxaColeta}
+                onChange={e => setOptField('b', 'percTaxaColeta', parseFloat(e.target.value) || 0)} />%</span>
             </div>
           </div>
           <div className="tri-cols">
