@@ -88,7 +88,7 @@ svg.connectors{position:absolute;top:0;left:0;width:100%;height:100%;pointer-eve
 
 .flow-grid{
   display:grid;
-  grid-template-columns:104px repeat(7,1fr);
+  grid-template-columns:132px repeat(7,1fr);
   grid-auto-rows:minmax(118px,auto);
   position:relative;
   z-index:2;
@@ -100,17 +100,29 @@ svg.connectors{position:absolute;top:0;left:0;width:100%;height:100%;pointer-eve
   display:flex;align-items:center;
   font-family:'Space Grotesk',sans-serif;
   font-weight:600;font-size:13px;
-  padding:0 10px 0 0;
+  padding:0 6px 0 0;
   color:var(--ink);
+  gap:2px;
+  position:relative;
+  z-index:5;
 }
 .lane-label .chip{
-  width:9px;height:9px;border-radius:50%;margin-right:8px;flex-shrink:0;
+  width:9px;height:9px;border-radius:50%;margin-right:6px;flex-shrink:0;
 }
+.lane-name-input{
+  border:1px solid transparent;
+  background:transparent;
+  font-family:inherit;font-weight:600;font-size:12.5px;color:var(--ink);
+  padding:2px 3px;border-radius:5px;width:100%;min-width:0;flex:1 1 auto;
+}
+.lane-name-input:focus{background:#FFFBEA;box-shadow:0 0 0 2px #FDE68A;border-color:transparent;outline:none;}
+.lane-del{
+  background:var(--surface);border:1px solid var(--line-strong);color:var(--ink-soft);cursor:pointer;font-size:13px;line-height:1;
+  padding:1px 5px;border-radius:4px;flex-shrink:0;flex-grow:0;
+}
+.lane-del:hover{color:#DC2626;background:#FEE2E2;border-color:#FCA5A5;}
+.lane-add-row{margin-top:12px;max-width:220px;}
 .lane-band{grid-column:2 / -1;border-radius:8px;z-index:0;align-self:stretch;}
-.lane-band.cliente{background:var(--cliente-bg);}
-.lane-band.seller{background:var(--seller-bg);}
-.lane-band.ops{background:var(--ops-bg);}
-.lane-band.financeiro{background:var(--financeiro-bg);}
 
 .card{
   align-self:center;
@@ -153,6 +165,7 @@ svg.connectors{position:absolute;top:0;left:0;width:100%;height:100%;pointer-eve
   background:transparent;
   width:100%;
   resize:none;
+  overflow:hidden;
   font-family:inherit;
   font-size:12px;
   padding:1px 2px;
@@ -177,6 +190,34 @@ svg.connectors{position:absolute;top:0;left:0;width:100%;height:100%;pointer-eve
   font-family:'IBM Plex Mono',monospace;
   font-size:10px;color:var(--ink-soft);
 }
+
+.card-controls{
+  display:flex;align-items:center;gap:4px;
+  margin-top:8px;padding-top:7px;
+  border-top:1px solid var(--line);
+}
+.card-controls select{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:10.5px;
+  border:1px solid var(--line-strong);
+  border-radius:5px;
+  padding:2px 3px;
+  color:var(--ink-soft);
+  background:var(--surface);
+  flex:1;min-width:0;
+}
+.card-controls button{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:11px;
+  border:1px solid var(--line-strong);
+  border-radius:5px;
+  background:var(--surface);
+  color:var(--ink-soft);
+  cursor:pointer;
+  padding:2px 6px;
+  line-height:1.4;
+}
+.card-controls button:hover{border-color:var(--ops);color:var(--ops);background:var(--ops-bg);}
 
 .docs{margin-top:40px;}
 .docs h2{
@@ -237,7 +278,7 @@ summary .count{
 }
 .doc-item .content .d-input{
   font-size:12.5px;color:var(--ink-soft);outline:none;border-radius:4px;
-  border:1px solid transparent;background:transparent;width:100%;resize:none;font-family:inherit;padding:1px 2px;line-height:1.4;
+  border:1px solid transparent;background:transparent;width:100%;resize:none;overflow:hidden;font-family:inherit;padding:1px 2px;line-height:1.4;
 }
 .doc-item .content .t-input:focus,
 .doc-item .content .d-input:focus{background:#FFFBEA;box-shadow:0 0 0 2px #FDE68A;border-color:transparent;}
@@ -261,7 +302,7 @@ footer.hint{
 }
 
 @media print{
-  .toolbar, .add-row, .doc-item .del{display:none !important;}
+  .toolbar, .add-row, .doc-item .del, .card-controls, .lane-add-row, .lane-del{display:none !important;}
   details.section{box-shadow:none;border:1px solid #ccc;}
   details.section:not([open]){display:none;}
   body{background:#fff;}
