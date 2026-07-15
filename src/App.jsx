@@ -94,13 +94,34 @@ const DEFAULT_DOCS = {
 const DEFAULT_TRI = {
   valorProduto: 1000,
   a: { percParceiro: 30, percRepasse: 65 },
-  b: { percSeller: 25, percTaxa: 5 },
+  b: { percComissaoMadeira: 20, percComissaoColeta: 6 },
   c: { percCompra: 15, percRevenda: 30 },
   d: { percParceiro: 30, percCredito: 20 },
 }
 
 function defaultCards() {
   return JSON.parse(JSON.stringify(DEFAULT_CARD_STATE))
+}
+
+// Merges saved data (possibly from an older version of the tool, missing
+// fields like laneId/col, or with a different shape for tri.b) with the
+// current defaults, so old localStorage/exported JSON never breaks the layout.
+function mergeCards(savedCards) {
+  const merged = {}
+  Object.keys(DEFAULT_CARD_STATE).forEach(id => {
+    merged[id] = { ...DEFAULT_CARD_STATE[id], ...(savedCards?.[id] || {}) }
+  })
+  return merged
+}
+
+function mergeTri(savedTri) {
+  return {
+    valorProduto: savedTri?.valorProduto ?? DEFAULT_TRI.valorProduto,
+    a: { ...DEFAULT_TRI.a, ...(savedTri?.a || {}) },
+    b: { ...DEFAULT_TRI.b, ...(savedTri?.b || {}) },
+    c: { ...DEFAULT_TRI.c, ...(savedTri?.c || {}) },
+    d: { ...DEFAULT_TRI.d, ...(savedTri?.d || {}) },
+  }
 }
 
 function loadState() {
@@ -132,9 +153,9 @@ export default function App() {
   useEffect(() => {
     const saved = loadState()
     if (saved) {
-      if (saved.cards) setCards(saved.cards)
+      if (saved.cards) setCards(mergeCards(saved.cards))
       if (saved.docs) setDocs(saved.docs)
-      if (saved.tri) setTriState(saved.tri)
+      if (saved.tri) setTriState(mergeTri(saved.tri))
       if (saved.lanes) setLanes(saved.lanes)
     }
   }, [])
@@ -240,9 +261,9 @@ export default function App() {
     reader.onload = e => {
       try {
         const data = JSON.parse(e.target.result)
-        if (data.cards) setCards(data.cards)
+        if (data.cards) setCards(mergeCards(data.cards))
         if (data.docs) setDocs(data.docs)
-        if (data.tri) setTriState(data.tri)
+        if (data.tri) setTriState(mergeTri(data.tri))
         if (data.lanes) setLanes(data.lanes)
         localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
         setSaveNote('importado ' + new Date().toLocaleTimeString('pt-BR'))
