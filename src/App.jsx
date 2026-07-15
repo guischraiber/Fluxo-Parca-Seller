@@ -3,18 +3,52 @@ import TriangulacaoView from './TriangulacaoView.jsx'
 
 const STORAGE_KEY = 'mm-mapeamento-cancelamento-parca-v1'
 
-const CARD_DEFS = [
-  { id: 's1', lane: 1, col: 2, badge: 'DIA 0', border: 'cliente-border', title: 'Solicita cancelamento', desc: 'Cliente cancela o pedido após já ter recebido o produto.' },
-  { id: 's2', lane: 2, col: 3, badge: 'DIA 0', border: 'seller-border', title: 'Seller é notificado', desc: 'Prazo de X dias começa a contar para agendar e realizar a coleta.' },
-  { id: 's3', lane: 2, col: 4, badge: 'DECISÃO · DIA 0–X', border: '', decision: true, title: 'Seller coleta dentro do prazo?', desc: 'Verifica se a retirada foi agendada e concluída até o dia X.' },
-  { id: 's4', lane: 2, col: 5, badge: 'SIM', border: 'seller-border', end: true, title: 'Coleta concluída', desc: 'Produto retorna ao seller. Caso encerrado sem intervenção.' },
-  { id: 's5', lane: 3, col: 5, badge: 'NÃO · DIA X', border: 'ops-border', title: 'Madeira intervém', desc: 'Prazo estourado sem coleta pelo seller. Caso escala para a Ops.' },
-  { id: 's6', lane: 3, col: 6, badge: 'DECISÃO · DIA X+', border: '', decision: true, title: 'Coleta ou libera saldo?', desc: 'Critério de escolha entre acionar coleta ou estornar o cliente — a validar.' },
-  { id: 's7', lane: 3, col: 7, badge: 'COLETA', border: 'ops-border', title: 'Madeira aciona a coleta', desc: 'Transportadora/parceiro Parça é acionado para retirar o produto.' },
-  { id: 's8', lane: 4, col: 7, badge: 'SALDO', border: 'financeiro-border', title: 'Libera saldo ao cliente', desc: 'Financeiro processa o estorno sem aguardar a devolução física.' },
-  { id: 's9', lane: 3, col: 8, badge: 'FIM', border: 'ops-border', end: true, title: 'Produto retorna', desc: 'Item volta ao estoque do seller ou é descartado, conforme condição.' },
-  { id: 's10', lane: 1, col: 8, badge: 'FIM', border: 'cliente-border', end: true, title: 'Estorno recebido', desc: 'Cliente recebe o saldo. Caso encerrado.' },
+const PALETTE = [
+  { color: '#64748B', bg: '#EEF0F2' },
+  { color: '#F97316', bg: '#FFF1E4' },
+  { color: '#2563EB', bg: '#E9EFFE' },
+  { color: '#16A34A', bg: '#E9F7EF' },
+  { color: '#7C3AED', bg: '#F1E9FE' },
+  { color: '#0EA5E9', bg: '#E5F6FE' },
+  { color: '#DB2777', bg: '#FCE4EF' },
 ]
+
+const DEFAULT_LANES = [
+  { id: 'cliente', label: 'Cliente', colorIdx: 0 },
+  { id: 'seller', label: 'Seller', colorIdx: 1 },
+  { id: 'ops', label: 'Madeira (Ops)', colorIdx: 2 },
+  { id: 'financeiro', label: 'Financeiro', colorIdx: 3 },
+]
+
+// Metadata that stays fixed (badge text, whether it's a decision/end point).
+// laneId, col, title and desc live in editable state so the flow can be reshaped.
+const CARD_META = {
+  s1: { badge: 'DIA 0', border: true },
+  s2: { badge: 'DIA 0', border: true },
+  s3: { badge: 'DECISÃO · DIA 0–X', decision: true },
+  s4: { badge: 'SIM', border: true, end: true },
+  s5: { badge: 'NÃO · DIA X', border: true },
+  s6: { badge: 'DECISÃO · DIA X+', decision: true },
+  s7: { badge: 'COLETA', border: true },
+  s8: { badge: 'SALDO', border: true },
+  s9: { badge: 'FIM', border: true, end: true },
+  s10: { badge: 'FIM', border: true, end: true },
+}
+
+const DEFAULT_CARD_STATE = {
+  s1: { laneId: 'cliente', col: 2, title: 'Solicita cancelamento', desc: 'Cliente cancela o pedido após já ter recebido o produto.' },
+  s2: { laneId: 'seller', col: 3, title: 'Seller é notificado', desc: 'Prazo de X dias começa a contar para agendar e realizar a coleta.' },
+  s3: { laneId: 'seller', col: 4, title: 'Seller coleta dentro do prazo?', desc: 'Verifica se a retirada foi agendada e concluída até o dia X.' },
+  s4: { laneId: 'seller', col: 5, title: 'Coleta concluída', desc: 'Produto retorna ao seller. Caso encerrado sem intervenção.' },
+  s5: { laneId: 'ops', col: 5, title: 'Madeira intervém', desc: 'Prazo estourado sem coleta pelo seller. Caso escala para a Ops.' },
+  s6: { laneId: 'ops', col: 6, title: 'Coleta ou libera saldo?', desc: 'Critério de escolha entre acionar coleta ou estornar o cliente — a validar.' },
+  s7: { laneId: 'ops', col: 7, title: 'Madeira aciona a coleta', desc: 'Transportadora/parceiro Parça é acionado para retirar o produto.' },
+  s8: { laneId: 'financeiro', col: 7, title: 'Libera saldo ao cliente', desc: 'Financeiro processa o estorno sem aguardar a devolução física.' },
+  s9: { laneId: 'ops', col: 8, title: 'Produto retorna', desc: 'Item volta ao estoque do seller ou é descartado, conforme condição.' },
+  s10: { laneId: 'cliente', col: 8, title: 'Estorno recebido', desc: 'Cliente recebe o saldo. Caso encerrado.' },
+}
+
+const CARD_IDS_ORDER = Object.keys(CARD_META)
 
 const CONNECTIONS = [
   { from: 's1', to: 's2' },
@@ -26,13 +60,6 @@ const CONNECTIONS = [
   { from: 's6', to: 's8', label: 'Saldo' },
   { from: 's7', to: 's9' },
   { from: 's8', to: 's10' },
-]
-
-const LANE_LABELS = [
-  { row: 1, label: 'Cliente', className: 'cliente', color: 'var(--cliente)' },
-  { row: 2, label: 'Seller', className: 'seller', color: 'var(--seller)' },
-  { row: 3, label: 'Madeira (Ops)', className: 'ops', color: 'var(--ops)' },
-  { row: 4, label: 'Financeiro', className: 'financeiro', color: 'var(--financeiro)' },
 ]
 
 const DEFAULT_DOCS = {
@@ -73,9 +100,7 @@ const DEFAULT_TRI = {
 }
 
 function defaultCards() {
-  const obj = {}
-  CARD_DEFS.forEach(c => { obj[c.id] = { title: c.title, desc: c.desc } })
-  return obj
+  return JSON.parse(JSON.stringify(DEFAULT_CARD_STATE))
 }
 
 function loadState() {
@@ -86,11 +111,18 @@ function loadState() {
   return null
 }
 
+function autoGrow(el) {
+  if (!el) return
+  el.style.height = 'auto'
+  el.style.height = el.scrollHeight + 'px'
+}
+
 export default function App() {
   const [view, setView] = useState('fluxo')
   const [cards, setCards] = useState(defaultCards())
   const [docs, setDocs] = useState(DEFAULT_DOCS)
   const [tri, setTriState] = useState(DEFAULT_TRI)
+  const [lanes, setLanes] = useState(DEFAULT_LANES)
   const [saveNote, setSaveNote] = useState('tudo salvo')
   const wrapRef = useRef(null)
   const cardRefs = useRef({})
@@ -103,14 +135,15 @@ export default function App() {
       if (saved.cards) setCards(saved.cards)
       if (saved.docs) setDocs(saved.docs)
       if (saved.tri) setTriState(saved.tri)
+      if (saved.lanes) setLanes(saved.lanes)
     }
   }, [])
 
-  const scheduleSave = useCallback((nextCards, nextDocs, nextTri) => {
+  const scheduleSave = useCallback((nextCards, nextDocs, nextTri, nextLanes) => {
     setSaveNote('editando…')
     clearTimeout(saveTimer.current)
     saveTimer.current = setTimeout(() => {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ cards: nextCards, docs: nextDocs, tri: nextTri }))
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ cards: nextCards, docs: nextDocs, tri: nextTri, lanes: nextLanes }))
       setSaveNote('salvo ' + new Date().toLocaleTimeString('pt-BR'))
     }, 500)
   }, [])
@@ -118,16 +151,49 @@ export default function App() {
   function updateCard(id, field, value) {
     setCards(prev => {
       const next = { ...prev, [id]: { ...prev[id], [field]: value } }
-      scheduleSave(next, docs, tri)
+      scheduleSave(next, docs, tri, lanes)
       return next
     })
+  }
+
+  function renameLane(id, label) {
+    setLanes(prev => {
+      const next = prev.map(l => l.id === id ? { ...l, label } : l)
+      scheduleSave(cards, docs, tri, next)
+      return next
+    })
+  }
+
+  function addLane() {
+    setLanes(prev => {
+      const newLane = { id: 'lane_' + Date.now(), label: 'Nova raia', colorIdx: prev.length % PALETTE.length }
+      const next = [...prev, newLane]
+      scheduleSave(cards, docs, tri, next)
+      return next
+    })
+  }
+
+  function removeLane(id) {
+    if (lanes.length <= 1) return
+    if (!window.confirm('Remover esta raia? Os cards nela serão movidos para a primeira raia da lista.')) return
+    const remaining = lanes.filter(l => l.id !== id)
+    const fallbackId = remaining[0].id
+    setCards(prev => {
+      const next = { ...prev }
+      Object.keys(next).forEach(k => {
+        if (next[k].laneId === id) next[k] = { ...next[k], laneId: fallbackId }
+      })
+      scheduleSave(next, docs, tri, remaining)
+      return next
+    })
+    setLanes(remaining)
   }
 
   function updateDocItem(section, idx, field, value) {
     setDocs(prev => {
       const list = prev[section].map((item, i) => i === idx ? { ...item, [field]: value } : item)
       const next = { ...prev, [section]: list }
-      scheduleSave(cards, next, tri)
+      scheduleSave(cards, next, tri, lanes)
       return next
     })
   }
@@ -135,7 +201,7 @@ export default function App() {
   function addItem(section) {
     setDocs(prev => {
       const next = { ...prev, [section]: [...prev[section], { t: 'Novo item', d: 'Descrição...' }] }
-      scheduleSave(cards, next, tri)
+      scheduleSave(cards, next, tri, lanes)
       return next
     })
   }
@@ -143,7 +209,7 @@ export default function App() {
   function deleteItem(section, idx) {
     setDocs(prev => {
       const next = { ...prev, [section]: prev[section].filter((_, i) => i !== idx) }
-      scheduleSave(cards, next, tri)
+      scheduleSave(cards, next, tri, lanes)
       return next
     })
   }
@@ -151,13 +217,13 @@ export default function App() {
   function setTri(updater) {
     setTriState(prev => {
       const next = typeof updater === 'function' ? updater(prev) : updater
-      scheduleSave(cards, docs, next)
+      scheduleSave(cards, docs, next, lanes)
       return next
     })
   }
 
   function exportJSON() {
-    const data = { cards, docs, tri }
+    const data = { cards, docs, tri, lanes }
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -177,6 +243,7 @@ export default function App() {
         if (data.cards) setCards(data.cards)
         if (data.docs) setDocs(data.docs)
         if (data.tri) setTriState(data.tri)
+        if (data.lanes) setLanes(data.lanes)
         localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
         setSaveNote('importado ' + new Date().toLocaleTimeString('pt-BR'))
       } catch (err) {
@@ -193,6 +260,7 @@ export default function App() {
     setCards(defaultCards())
     setDocs(DEFAULT_DOCS)
     setTriState(DEFAULT_TRI)
+    setLanes(DEFAULT_LANES)
   }
 
   // Draw connectors
@@ -255,7 +323,7 @@ export default function App() {
     drawConnectors()
     window.addEventListener('resize', drawConnectors)
     return () => window.removeEventListener('resize', drawConnectors)
-  }, [drawConnectors, cards, view])
+  }, [drawConnectors, cards, lanes, view])
 
   return (
     <div className="page">
@@ -285,55 +353,90 @@ export default function App() {
       {view === 'fluxo' && (
         <>
           <div className="legend">
-            <span><span className="dot" style={{ background: 'var(--cliente)' }}></span>Cliente</span>
-            <span><span className="dot" style={{ background: 'var(--seller)' }}></span>Seller (parceiro)</span>
-            <span><span className="dot" style={{ background: 'var(--ops)' }}></span>Madeira Madeira (Ops)</span>
-            <span><span className="dot" style={{ background: 'var(--financeiro)' }}></span>Financeiro</span>
+            {lanes.map(l => (
+              <span key={l.id}><span className="dot" style={{ background: PALETTE[l.colorIdx % PALETTE.length].color }}></span>{l.label}</span>
+            ))}
             <span><span className="dot" style={{ background: 'var(--decision)', borderRadius: '2px' }}></span>Ponto de decisão</span>
           </div>
 
           <div className="flow-card">
             <div className="flow-wrap" ref={wrapRef}>
               <svg id="connectors-svg" className="connectors"></svg>
-              <div className="flow-grid">
-                {LANE_LABELS.map(l => (
-                  <div key={l.row} className="lane-label" style={{ gridRow: l.row }}>
-                    <span className="chip" style={{ background: l.color }}></span>{l.label}
+              <div className="flow-grid" style={{ gridTemplateRows: `repeat(${lanes.length}, minmax(150px,auto))` }}>
+                {lanes.map((l, idx) => (
+                  <div key={l.id} className="lane-label" style={{ gridRow: idx + 1 }}>
+                    <span className="chip" style={{ background: PALETTE[l.colorIdx % PALETTE.length].color }}></span>
+                    <input
+                      className="lane-name-input"
+                      value={l.label}
+                      onChange={e => renameLane(l.id, e.target.value)}
+                    />
+                    {lanes.length > 1 && (
+                      <button className="lane-del" title="Remover raia" onClick={() => removeLane(l.id)}>×</button>
+                    )}
                   </div>
                 ))}
-                {LANE_LABELS.map(l => (
-                  <div key={'band-' + l.row} className={'lane-band ' + l.className} style={{ gridRow: l.row }}></div>
+                {lanes.map((l, idx) => (
+                  <div key={'band-' + l.id} className="lane-band" style={{ gridRow: idx + 1, background: PALETTE[l.colorIdx % PALETTE.length].bg }}></div>
                 ))}
 
-                {CARD_DEFS.map(c => (
-                  <div
-                    key={c.id}
-                    ref={el => { cardRefs.current[c.id] = el }}
-                    className={['card', c.border, c.decision ? 'decision' : '', c.end ? 'end' : ''].filter(Boolean).join(' ')}
-                    style={{ gridColumn: c.col, gridRow: c.lane }}
-                  >
-                    <span className="badge">{c.badge}</span>
-                    <input
-                      className="title-input"
-                      value={cards[c.id]?.title ?? ''}
-                      onChange={e => updateCard(c.id, 'title', e.target.value)}
-                      onBlur={drawConnectors}
-                    />
-                    <textarea
-                      className="desc-input"
-                      rows={2}
-                      value={cards[c.id]?.desc ?? ''}
-                      onChange={e => updateCard(c.id, 'desc', e.target.value)}
-                      onBlur={drawConnectors}
-                    />
-                    {c.end && <span className="end-tag">✓ fim do caso</span>}
-                  </div>
-                ))}
+                {CARD_IDS_ORDER.map(id => {
+                  const meta = CARD_META[id]
+                  const card = cards[id]
+                  if (!card) return null
+                  const laneIdx = Math.max(0, lanes.findIndex(l => l.id === card.laneId))
+                  const laneColor = PALETTE[lanes[laneIdx]?.colorIdx % PALETTE.length]?.color || '#94A3B8'
+                  return (
+                    <div
+                      key={id}
+                      ref={el => { cardRefs.current[id] = el }}
+                      className={['card', meta.decision ? 'decision' : '', meta.end ? 'end' : ''].filter(Boolean).join(' ')}
+                      style={{
+                        gridColumn: card.col,
+                        gridRow: laneIdx + 1,
+                        borderTop: (meta.border && !meta.decision) ? `3px solid ${laneColor}` : undefined
+                      }}
+                    >
+                      <span className="badge">{meta.badge}</span>
+                      <input
+                        className="title-input"
+                        value={card.title ?? ''}
+                        onChange={e => updateCard(id, 'title', e.target.value)}
+                        onBlur={drawConnectors}
+                      />
+                      <textarea
+                        className="desc-input"
+                        rows={2}
+                        ref={el => autoGrow(el)}
+                        value={card.desc ?? ''}
+                        onChange={e => { updateCard(id, 'desc', e.target.value); autoGrow(e.target) }}
+                        onBlur={drawConnectors}
+                      />
+                      {meta.end && <span className="end-tag">✓ fim do caso</span>}
+
+                      <div className="card-controls">
+                        <select
+                          value={card.laneId}
+                          onChange={e => updateCard(id, 'laneId', e.target.value)}
+                          title="Mover para outra raia"
+                        >
+                          {lanes.map(l => <option key={l.id} value={l.id}>{l.label}</option>)}
+                        </select>
+                        <button title="Mover para a esquerda" onClick={() => updateCard(id, 'col', Math.max(2, (card.col || 2) - 1))}>◀</button>
+                        <button title="Mover para a direita" onClick={() => updateCard(id, 'col', (card.col || 2) + 1)}>▶</button>
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
             </div>
           </div>
 
-          <footer className="hint">↳ arraste a barra de rolagem horizontal se necessário · clique em qualquer texto para editar</footer>
+          <div className="lane-add-row">
+            <button className="add-row" onClick={addLane}>+ adicionar raia</button>
+          </div>
+
+          <footer className="hint">↳ use o seletor no card para mover entre raias, e as setas ◀ ▶ para reordenar · clique no nome da raia para renomear</footer>
 
           <div className="docs">
             <h2>Documentação do processo</h2>
@@ -377,8 +480,9 @@ function DocSection({ title, sectionKey, docs, updateDocItem, addItem, deleteIte
                 <textarea
                   className="d-input"
                   rows={2}
+                  ref={el => autoGrow(el)}
                   value={item.d}
-                  onChange={e => updateDocItem(sectionKey, idx, 'd', e.target.value)}
+                  onChange={e => { updateDocItem(sectionKey, idx, 'd', e.target.value); autoGrow(e.target) }}
                 />
               </div>
               <button className="del" title="Remover" onClick={() => deleteItem(sectionKey, idx)}>×</button>
