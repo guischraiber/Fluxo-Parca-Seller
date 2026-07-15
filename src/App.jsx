@@ -94,7 +94,7 @@ const DEFAULT_DOCS = {
 const DEFAULT_TRI = {
   valorProduto: 1000,
   a: { percParceiro: 30, percRepasse: 65 },
-  b: { percComissaoMadeira: 20, percComissaoColeta: 6 },
+  b: { percTaxaColeta: 6 },
   c: { percCompra: 15, percRevenda: 30 },
   d: { percParceiro: 30, percCredito: 20 },
 }
